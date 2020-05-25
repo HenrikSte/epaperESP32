@@ -1,19 +1,22 @@
-
-// mapping suggestion for ESP32, e.g. LOLIN32, see .../variants/.../pins_arduino.h for your board
-// NOTE: there are variants with different pins for SPI ! CHECK SPI PINS OF YOUR BOARD
-// BUSY -> 4, RST -> 16, DC -> 17, CS -> SS(5), CLK -> SCK(18), DIN -> MOSI(23), GND -> GND, 3.3V -> 3.3V
-
-// include library, include base class, make path known
 #include <wire.h>
+#include <spi.h>
 #include <GxEPD.h>
 
+// ********************************
+// ********************************
+// uncomment for 4.2 display 
+#define ESP32DRIVERBOARD
+// ********************************
+// ********************************
+
+#if !defined ESP32DRIVERBOARD
 // select the display class to use, only one
 //#include <GxGDEW042T2/GxGDEW042T2.h>      // 4.2" b/w
 #include <GxGDEW042Z15/GxGDEW042Z15.h>    // 4.2" b/w/r
+#else
 //#include <GxGDEW075T8/GxGDEW075T8.h>      // 7.5" b/w
-//#include <GxGDEW075T7/GxGDEW075T7.h>      // 7.5" b/w 800x480
-//#include <GxGDEW075Z09/GxGDEW075Z09.h>    // 7.5" b/w/r
-//#include <GxGDEW075Z08/GxGDEW075Z08.h>    // 7.5" b/w/r 800x480
+#include <GxGDEW075T7/GxGDEW075T7.h>      // 7.5" b/w 800x480
+#endif
 
 #include GxEPD_BitmapExamples
 
@@ -30,12 +33,26 @@
 
 #if defined(ESP32)
 
-#define PIN_BUSY  4   // Purple
-#define PIN_RST   16  // White
-#define PIN_DC    17  // Green
-#define PIN_CS    5   // Orange
-#define PIN_CLK   18  // Yellow
-#define PIN_DIN   23  // Blue
+#if !defined ESP32DRIVERBOARD
+  #define PIN_BUSY  4   // Purple
+  #define PIN_RST   16  // White
+  #define PIN_DC    17  // Green
+  #define PIN_CS    5   // Orange
+  #define PIN_CLK   18  // Yellow
+  #define PIN_DIN   23  // Blue
+#else
+  #define PIN_BUSY  25 
+  #define PIN_RST   26
+  #define PIN_DC    27
+  #define PIN_CS    15 
+  #define PIN_CLK   13
+  #define PIN_DIN   12
+  #define PIN_MISO  12
+  #define PIN_MOSI  14
+  #define PIN_SS    15 
+#endif
+
+//SPIClass displaySPI;  
 
 GxIO_Class io(SPI, /*CS=5*/ PIN_CS, /*DC=*/ PIN_DC, /*RST=*/ PIN_RST); // arbitrary selection of 17, 16
 GxEPD_Class display(io, /*RST=*/ PIN_RST, /*BUSY=*/ PIN_BUSY); // arbitrary selection of (16), 4
@@ -242,11 +259,17 @@ void showBitmapExample()
 
 void setup()
 {
+
   Serial.begin(115200);
   Serial.println();
   Serial.println("setup");
 
   display.init(115200); // enable diagnostic output on Serial
+#if defined ESP32DRIVERBOARD
+  SPI.end(); 
+  SPI.begin(13, 12, 14, 15);
+  //SPI.begin(PIN_CLK,PIN_MISO,PIN_MOSI, PIN_SS);
+#endif
 
   Serial.println("setup done");
 }
