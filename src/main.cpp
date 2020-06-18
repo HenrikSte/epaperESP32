@@ -1,21 +1,29 @@
+#include <arduino.h>
 #include <wire.h>
 #include <spi.h>
 #include <GxEPD.h>
 
-// ********************************
-// ********************************
-// uncomment for 4.2 display 
-#define ESP32DRIVERBOARD
-// ********************************
-// ********************************
+
+//remove for regular ESP32 development boards
+// #define ESP32DRIVERBOARD
+
+// remove if Black white RED display
+//#define BWR_DISPLAY
+
+
 
 #if !defined ESP32DRIVERBOARD
-// select the display class to use, only one
-//#include <GxGDEW042T2/GxGDEW042T2.h>      // 4.2" b/w
-#include <GxGDEW042Z15/GxGDEW042Z15.h>    // 4.2" b/w/r
+  #if defined BWR_DISPLAY
+    #include <GxGDEW042Z15/GxGDEW042Z15.h>    // 4.2" b/w/r
+  #else
+    #include <GxGDEW042T2/GxGDEW042T2.h>      // 4.2" b/w
+  #endif
 #else
-//#include <GxGDEW075T8/GxGDEW075T8.h>      // 7.5" b/w
-#include <GxGDEW075T7/GxGDEW075T7.h>      // 7.5" b/w 800x480
+  #if defined BWR_DISPLAY
+    #error BWR in 7.5inch not supported yet
+  #else
+    #include <GxGDEW075T7/GxGDEW075T7.h>      // 7.5" b/w 800x480
+  #endif
 #endif
 
 #include GxEPD_BitmapExamples
@@ -276,18 +284,24 @@ void setup()
 
 void loop()
 {
-  showBitmapExample();
-  delay(2000);
-#if !defined(__AVR)
-  //drawCornerTest();
-  showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
-  showFont("FreeMonoBold12pt7b", &FreeMonoBold12pt7b);
-  //showFont("FreeMonoBold18pt7b", &FreeMonoBold18pt7b);
-  //showFont("FreeMonoBold24pt7b", &FreeMonoBold24pt7b);
-#else
-  display.drawCornerTest();
-  delay(2000);
-  display.drawPaged(showFontCallback);
-#endif
-  delay(10000);
+  bool static once=false;
+  if (!once)
+  {
+    showBitmapExample();
+    delay(2000);
+  #if !defined(__AVR)
+    //drawCornerTest();
+    showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
+    showFont("FreeMonoBold12pt7b", &FreeMonoBold12pt7b);
+    showFont("FreeMonoBold18pt7b", &FreeMonoBold18pt7b);
+    showFont("FreeMonoBold24pt7b", &FreeMonoBold24pt7b);
+  #else
+    display.drawCornerTest();
+    delay(2000);
+    display.drawPaged(showFontCallback);
+  #endif
+    delay(10000);
+  }
+
+  once = true;
 }
